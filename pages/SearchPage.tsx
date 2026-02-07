@@ -1,19 +1,78 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import FiltersPanel from '../components/search/FiltersPanel';
 import ProfessionalCard from '../components/search/ProfessionalCard';
-import { professionals } from '../data/professionals';
-import { MenuIcon } from '../components/Icons';
+import { MenuIcon, SpinnerIcon } from '../components/Icons';
 import { Page } from '../types';
+import { supabase } from '../supabaseClient';
+import { Professional } from '../data/professionals';
 
 interface SearchPageProps {
     setCurrentPage: (page: Page, id?: number) => void;
 }
 
 const SearchPage: React.FC<SearchPageProps> = ({ setCurrentPage }) => {
-    // Em uma aplicação real, aqui estaria a lógica de estado para filtros e os resultados filtrados.
-    const filteredProfessionals = professionals;
-    const totalProfessionals = 180; // Exemplo de total
+    const [professionals, setProfessionals] = useState<Professional[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchProfessionals = async () => {
+            setLoading(true);
+            setError(null);
+
+            const { data, error } = await supabase
+                .from('professionals')
+                .select('*');
+
+            if (error) {
+                console.error('Error fetching professionals:', error);
+                setError('Não foi possível carregar os profissionais. Tente novamente mais tarde.');
+            } else {
+                setProfessionals(data || []);
+            }
+            setLoading(false);
+        };
+
+        fetchProfessionals();
+    }, []);
+
+    const totalProfessionals = professionals.length;
+
+    const renderContent = () => {
+        if (loading) {
+            return (
+                <div className="flex justify-center items-center h-64">
+                    <SpinnerIcon className="h-10 w-10 animate-spin text-[#2A8C82]" />
+                </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="text-center h-64 flex flex-col justify-center items-center bg-red-50 rounded-lg p-4">
+                    <p className="text-red-600 font-semibold">Ocorreu um erro</p>
+                    <p className="text-gray-600 mt-2">{error}</p>
+                </div>
+            );
+        }
+
+        if (professionals.length === 0) {
+            return (
+                <div className="text-center h-64 flex flex-col justify-center items-center bg-gray-100 rounded-lg p-4">
+                     <p className="text-gray-800 font-semibold">Nenhum profissional encontrado</p>
+                     <p className="text-gray-600 mt-2">Tente ajustar seus filtros ou verifique se há dados na tabela 'professionals' do Supabase.</p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {professionals.map(prof => (
+                    <ProfessionalCard key={prof.id} professional={prof} setCurrentPage={setCurrentPage} />
+                ))}
+            </div>
+        );
+    };
 
     return (
         <div className="bg-[#E8F3F1]/50">
@@ -36,7 +95,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ setCurrentPage }) => {
                     <main className="flex-1">
                         <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between mb-6">
                             <p className="text-sm text-[#666666]">
-                                Exibindo <span className="font-bold text-[#333333]">{filteredProfessionals.length}</span> de <span className="font-bold text-[#333333]">{totalProfessionals}</span> profissionais encontrados
+                                Exibindo <span className="font-bold text-[#333333]">{professionals.length}</span> de <span className="font-bold text-[#333333]">{totalProfessionals}</span> profissionais encontrados
                             </p>
                             <div>
                                 <label htmlFor="sort" className="sr-only">Ordenar por</label>
@@ -49,11 +108,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ setCurrentPage }) => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filteredProfessionals.map(prof => (
-                                <ProfessionalCard key={prof.id} professional={prof} setCurrentPage={setCurrentPage} />
-                            ))}
-                        </div>
+                        {renderContent()}
                     </main>
                 </div>
             </div>
