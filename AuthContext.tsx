@@ -29,19 +29,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const getInitialSession = async () => {
-            const { data: { session: currentSession } } = await supabase.auth.getSession();
-            setSession(currentSession);
-            setUser(currentSession?.user ?? null);
-            setLoading(false);
-        };
-        
-        getInitialSession();
-
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
-                setSession(session);
-                setUser(session?.user ?? null);
+            async (_event, newSession) => {
+                setSession(newSession);
+                const currentUser = newSession?.user;
+                setUser(currentUser ?? null);
+
+                if (currentUser) {
+                    const { data: profileData, error: profileError } = await supabase
+                        .from('users')
+                        .select('id, full_name, role')
+                        .eq('id', currentUser.id)
+                        .single();
+
+                    if (profileError) {
+                        console.error("Error fetching user profile:", profileError);
+                        setProfile(null);
+                    } else {
+                        setProfile(profileData as UserProfile);
+                    }
+                } else {
+                    setProfile(null);
+                }
+                
+                setLoading(false);
             }
         );
 
@@ -49,32 +60,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             subscription.unsubscribe();
         };
     }, []);
-    
-    // Fetch profile whenever the user object changes
-    useEffect(() => {
-        const fetchProfile = async () => {
-            if (user) {
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('id, full_name, role')
-                    .eq('id', user.id)
-                    .single();
-                
-                if (error) {
-                    console.error("Error fetching user profile:", error);
-                    setProfile(null);
-                } else {
-                    setProfile(data as UserProfile);
-                }
-            }
-        };
-
-        if (user && !profile) {
-            fetchProfile();
-        } else if (!user) {
-            setProfile(null);
-        }
-    }, [user, profile]);
 
     const signIn = async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

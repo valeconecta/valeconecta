@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Page } from '../../types';
 import { AdminView, UserSubView, FinancialSubView } from '../../pages/AdminPage';
 import { Logo, LayoutDashboardIcon, UsersIcon, ClipboardListIcon, ShieldCheckIcon, LandmarkIcon, LifeBuoyIcon, SettingsIcon, BarChart3Icon, LogOutIcon, ChevronRightIcon } from '../Icons';
+import { useAuth } from '../../AuthContext';
 
 interface AdminSidebarProps {
   currentView: AdminView;
@@ -32,6 +32,12 @@ const NavLink: React.FC<{
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ currentView, setCurrentView, setCurrentPage }) => {
     const [isUsersOpen, setUsersOpen] = useState(currentView === 'users');
     const [isFinancialOpen, setFinancialOpen] = useState(currentView === 'financial');
+    const { signOut } = useAuth();
+
+    const handleLogout = async () => {
+        await signOut();
+        setCurrentPage('login');
+    }
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col">
@@ -78,11 +84,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ currentView, setCurrentView
       </nav>
       <div className="px-4 py-4 border-t border-gray-200">
         <button
-          onClick={() => setCurrentPage('home')}
+          onClick={handleLogout}
           className="w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-200"
         >
           <LogOutIcon className="h-5 w-5" />
-          <span className="ml-3">Voltar ao site</span>
+          <span className="ml-3">Sair</span>
         </button>
       </div>
     </div>
