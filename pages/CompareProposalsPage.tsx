@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { Page } from '../types';
-import { getProposalsByTaskId, acceptProposal as acceptProposalService } from '../supabaseService';
+import { getProposalsByTaskId } from '../supabaseService';
 import { supabase } from '../supabaseClient';
 import { ArrowLeftIcon, ShieldCheckIcon, SpinnerIcon } from '../components/Icons';
 import ProposalCard from '../components/client/ProposalCard';
 import ClientHeader from '../components/client/ClientHeader';
 import AcceptProposalModal from '../components/client/AcceptProposalModal';
 import { DetailedProfessional } from '../types';
+import CheckoutForm from '../components/CheckoutForm';
 
 interface CompareProposalsPageProps {
   taskId: number;
@@ -29,14 +31,14 @@ const CompareProposalsPage: React.FC<CompareProposalsPageProps> = ({ taskId, set
   
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<ProposalWithProfessional | null>(null);
+  const [isCheckoutActive, setCheckoutActive] = useState(false);
+
 
   useEffect(() => {
     const fetchProposals = async () => {
         setLoading(true);
         setError(null);
         try {
-            // Aqui, precisamos também do título da tarefa.
-            // Em um app real, poderíamos buscar a tarefa e as propostas juntas.
             const taskData = await supabase.from('tasks').select('title').eq('id', taskId).single();
             if (taskData.error) throw taskData.error;
             setTaskTitle(taskData.data.title);
@@ -59,22 +61,19 @@ const CompareProposalsPage: React.FC<CompareProposalsPageProps> = ({ taskId, set
     setModalOpen(true);
   };
   
-  const handleConfirmAcceptance = async () => {
+  const handleConfirmAcceptance = () => {
     if (!selectedProposal) return;
-    
-    try {
-        await acceptProposalService(taskId, selectedProposal.id, selectedProposal.professionals.id);
-        alert(`Proposta aceita! O pagamento foi processado com segurança. O serviço com ${selectedProposal.professionals.name} foi agendado.`);
-        setModalOpen(false);
-        setCurrentPage('client-dashboard');
-    } catch (err) {
-        alert("Ocorreu um erro ao aceitar a proposta. Tente novamente.");
-        console.error(err);
-    }
+    setModalOpen(false);
+    setCheckoutActive(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    alert(`Pagamento bem-sucedido! O serviço com ${selectedProposal?.professionals.name} foi agendado.`);
+    setCurrentPage('client-dashboard');
   };
 
 
-  const renderContent = () => {
+  const renderProposalsList = () => {
     if (loading) {
         return <div className="flex justify-center items-center h-64"><SpinnerIcon className="h-10 w-10 animate-spin text-[#2A8C82]" /></div>;
     }
@@ -103,29 +102,46 @@ const CompareProposalsPage: React.FC<CompareProposalsPageProps> = ({ taskId, set
     <div className="bg-gray-50 min-h-screen">
       <ClientHeader activeView="tasks" setActiveView={() => {}} setCurrentPage={setCurrentPage} isSubPage />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button onClick={() => setCurrentPage('client-dashboard')} className="flex items-center text-sm font-semibold text-gray-600 hover:text-gray-800 mb-6">
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          Voltar para Minhas Tarefas
-        </button>
         
-        <h1 className="text-3xl font-bold text-gray-800">Compare as Propostas</h1>
-        <p className="mt-2 text-lg text-gray-600">Para: <span className="font-semibold">{taskTitle}</span></p>
-
-        {renderContent()}
-
-        <div className="mt-12 bg-green-50 border border-green-200 rounded-lg p-6 flex items-start">
-            <ShieldCheckIcon className="h-8 w-8 text-green-600 flex-shrink-0 mr-4" />
+        {isCheckoutActive && selectedProposal ? (
             <div>
-                <h3 className="font-bold text-green-800">Seu pagamento está seguro.</h3>
-                <p className="text-sm text-green-700 mt-1">
-                    Lembre-se: seu pagamento fica retido conosco e só é liberado para o profissional 3 dias após você confirmar a conclusão do serviço. Isso é parte da nossa Garantia de Confiança.
-                </p>
+                 <button onClick={() => setCheckoutActive(false)} className="flex items-center text-sm font-semibold text-gray-600 hover:text-gray-800 mb-6">
+                    <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                    Voltar para as Propostas
+                </button>
+                <CheckoutForm 
+                    proposalId={selectedProposal.id}
+                    amount={selectedProposal.price}
+                    onSuccess={handlePaymentSuccess}
+                />
             </div>
-        </div>
+        ) : (
+            <>
+                <button onClick={() => setCurrentPage('client-dashboard')} className="flex items-center text-sm font-semibold text-gray-600 hover:text-gray-800 mb-6">
+                    <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                    Voltar para Minhas Tarefas
+                </button>
+                
+                <h1 className="text-3xl font-bold text-gray-800">Compare as Propostas</h1>
+                <p className="mt-2 text-lg text-gray-600">Para: <span className="font-semibold">{taskTitle}</span></p>
+
+                {renderProposalsList()}
+
+                <div className="mt-12 bg-green-50 border border-green-200 rounded-lg p-6 flex items-start">
+                    <ShieldCheckIcon className="h-8 w-8 text-green-600 flex-shrink-0 mr-4" />
+                    <div>
+                        <h3 className="font-bold text-green-800">Seu pagamento está seguro.</h3>
+                        <p className="text-sm text-green-700 mt-1">
+                            Lembre-se: seu pagamento fica retido conosco e só é liberado para o profissional 3 dias após você confirmar a conclusão do serviço. Isso é parte da nossa Garantia de Confiança.
+                        </p>
+                    </div>
+                </div>
+            </>
+        )}
 
       </main>
       
-      {selectedProposal && (
+      {selectedProposal && !isCheckoutActive && (
         <AcceptProposalModal 
             isOpen={isModalOpen}
             onClose={() => setModalOpen(false)}

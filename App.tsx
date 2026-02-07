@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+import { initMercadoPago } from '@mercadopago/sdk-react';
 import { Page } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -21,6 +23,9 @@ import TermsOfServicePage from './pages/TermsOfServicePage';
 import { AuthProvider, useAuth } from './AuthContext';
 import { SpinnerIcon } from './components/Icons';
 import { Role } from './auth/enums/role.enum';
+
+// Inicializa o SDK do Mercado Pago com a Public Key.
+initMercadoPago('APP_USR-f23f8641-4548-43c7-a694-a15be18b089b', { locale: 'pt-BR' });
 
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
