@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { initMercadoPago } from '@mercadopago/sdk-react';
 import { Page } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -23,16 +22,6 @@ import TermsOfServicePage from './pages/TermsOfServicePage';
 import { AuthProvider, useAuth } from './AuthContext';
 import { SpinnerIcon } from './components/Icons';
 import { Role } from './auth/enums/role.enum';
-
-// Chave pública do Mercado Pago: prioriza variável de ambiente, com fallback para desenvolvimento local.
-const mercadoPagoPublicKey = process.env.REACT_APP_MERCADO_PAGO_PUBLIC_KEY || 'APP_USR-f23f8641-4548-43c7-a694-a15be18b089b';
-
-if (mercadoPagoPublicKey) {
-  initMercadoPago(mercadoPagoPublicKey, { locale: 'pt-BR' });
-} else {
-  // Este aviso agora só aparecerá se ambos, env var e fallback, falharem.
-  console.error("A chave pública do Mercado Pago não foi encontrada. O checkout não funcionará.");
-}
 
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');

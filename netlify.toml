@@ -7,16 +7,16 @@
   # 1. Instala esbuild (nosso bundler)
   # 2. Garante que o diretório de publicação 'dist' exista
   # 3. Compila, otimiza e agrupa todo o código, injetando as variáveis de ambiente do Netlify no processo
-  # 4. Copia o index.html para 'dist' e o atualiza para usar o arquivo JavaScript compilado
+  # 4. Copia o index.html para 'dist'
+  # 5. Substitui de forma segura a tag de script de desenvolvimento pela de produção.
   command = """
     npm install esbuild && \
     mkdir -p dist && \
     npx esbuild index.tsx --bundle --outfile=dist/bundle.js --minify --jsx=automatic \
     --define:process.env.REACT_APP_SUPABASE_URL="'$REACT_APP_SUPABASE_URL'" \
-    --define:process.env.REACT_APP_SUPABASE_ANON_KEY="'$REACT_APP_SUPABASE_ANON_KEY'" \
-    --define:process.env.REACT_APP_MERCADO_PAGO_PUBLIC_KEY="'$REACT_APP_MERCADO_PAGO_PUBLIC_KEY'" && \
+    --define:process.env.REACT_APP_SUPABASE_ANON_KEY="'$REACT_APP_SUPABASE_ANON_KEY'" && \
     cp index.html dist/index.html && \
-    sed -i 's|<script type="module" src="/index.tsx"></script>|<script src="/bundle.js"></script>|' dist/index.html
+    sed 's|<script type="module" src="/index.tsx"></script>|<script src="/bundle.js"></script>|' dist/index.html > dist/index.html.tmp && mv dist/index.html.tmp dist/index.html
   """
   
   # Diretório que o Netlify irá publicar

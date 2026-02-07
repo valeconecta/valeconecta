@@ -14,10 +14,8 @@
     "@google/genai": "^1.40.0",
     "@nestjs/common": "^11.1.13",
     "passport-jwt": "^4.0.1",
-    "@nestjs/core": "^11.1.13",
-    "@nestjs/passport": "^11.0.5",
     "@supabase/supabase-js": "^2.45.0",
-    "@mercadopago/sdk-react": "^0.0.19"
+    "@mercadopago/sdk-react": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
