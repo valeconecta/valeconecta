@@ -1,8 +1,6 @@
-
 import React from 'react';
-import { DetailedProfessional } from '../../data/professionalProfileMockData';
+import { DetailedProfessional, MedalhaType } from '../../types';
 import { AwardIcon, ClockIcon, MessageCircleIcon, StarIcon, ToolboxIcon } from '../Icons';
-import { MedalhaType } from '../../data/professionals';
 import { Page } from '../../types';
 
 interface ProposalCardProps {
@@ -31,7 +29,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ professional, onAccept, onC
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
       <div className="p-6">
         <div className="flex items-center space-x-4">
-          <img src={professional.photoUrl} alt={professional.name} className="w-16 h-16 rounded-full"/>
+          <img src={professional.photoUrl || `https://i.pravatar.cc/150?img=${professional.id}`} alt={professional.name} className="w-16 h-16 rounded-full"/>
           <div>
             <h3 
               onClick={() => setCurrentPage('professional-profile', professional.id)}
@@ -41,14 +39,14 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ professional, onAccept, onC
             </h3>
             <div className="flex items-center mt-1 text-sm text-gray-600">
               <StarIcon className="w-5 h-5 text-yellow-400 mr-1" />
-              <span className="font-bold text-gray-800">{professional.rating.toFixed(1)}</span>
-              <span className="ml-1">({professional.reviewCount} avaliações)</span>
+              <span className="font-bold text-gray-800">{(professional.rating || 0).toFixed(1)}</span>
+              <span className="ml-1">({professional.reviewCount || 0} avaliações)</span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center space-x-2 mt-4">
-          {professional.medalhas.slice(0, 4).map(medalha => (
+          {professional.medalhas && professional.medalhas.slice(0, 4).map(medalha => (
             <MedalhaIcon key={medalha} medalha={medalha} className="w-6 h-6 text-[#2A8C82]" />
           ))}
         </div>

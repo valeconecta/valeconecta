@@ -1,50 +1,103 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Page } from '../types';
-import { proposalsByTaskId, acceptProposal } from '../data/clientMockData';
-import { ArrowLeftIcon, ShieldCheckIcon } from '../components/Icons';
+import { getProposalsByTaskId, acceptProposal as acceptProposalService } from '../supabaseService';
+import { supabase } from '../supabaseClient';
+import { ArrowLeftIcon, ShieldCheckIcon, SpinnerIcon } from '../components/Icons';
 import ProposalCard from '../components/client/ProposalCard';
 import ClientHeader from '../components/client/ClientHeader';
 import AcceptProposalModal from '../components/client/AcceptProposalModal';
-import { DetailedProfessional } from '../data/professionalProfileMockData';
+import { DetailedProfessional } from '../types';
 
 interface CompareProposalsPageProps {
   taskId: number;
   setCurrentPage: (page: Page, id?: number) => void;
 }
 
+// Interface para a proposta combinada com dados do profissional
+interface ProposalWithProfessional {
+    id: number;
+    price: number;
+    message: string;
+    professionals: DetailedProfessional;
+}
+
 const CompareProposalsPage: React.FC<CompareProposalsPageProps> = ({ taskId, setCurrentPage }) => {
+  const [proposals, setProposals] = useState<ProposalWithProfessional[]>([]);
+  const [taskTitle, setTaskTitle] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [isModalOpen, setModalOpen] = useState(false);
-  const [selectedProfessional, setSelectedProfessional] = useState<DetailedProfessional | null>(null);
+  const [selectedProposal, setSelectedProposal] = useState<ProposalWithProfessional | null>(null);
 
-  const data = proposalsByTaskId[taskId as keyof typeof proposalsByTaskId];
+  useEffect(() => {
+    const fetchProposals = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Aqui, precisamos também do título da tarefa.
+            // Em um app real, poderíamos buscar a tarefa e as propostas juntas.
+            const taskData = await supabase.from('tasks').select('title').eq('id', taskId).single();
+            if (taskData.error) throw taskData.error;
+            setTaskTitle(taskData.data.title);
 
-  if (!data) {
-    return (
-      <div className="text-center py-10">
-        <p>Tarefa não encontrada ou sem propostas.</p>
-        <button onClick={() => setCurrentPage('client-dashboard')} className="text-blue-600">Voltar ao Painel</button>
-      </div>
-    );
-  }
+            const proposalsData = await getProposalsByTaskId(taskId);
+            setProposals(proposalsData as any);
+        } catch (err) {
+            console.error(err);
+            setError("Não foi possível carregar as propostas.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchProposals();
+  }, [taskId]);
 
-  const handleAcceptClick = (professional: DetailedProfessional) => {
-    setSelectedProfessional(professional);
+
+  const handleAcceptClick = (proposal: ProposalWithProfessional) => {
+    setSelectedProposal(proposal);
     setModalOpen(true);
   };
   
-  const handleConfirmAcceptance = () => {
-    if (!selectedProfessional) return;
+  const handleConfirmAcceptance = async () => {
+    if (!selectedProposal) return;
     
-    // Simula a lógica do backend: aceita a proposta, processa o pagamento, atualiza o status da tarefa.
-    acceptProposal(taskId, selectedProfessional.id);
-    
-    alert(`Proposta aceita! O pagamento foi processado com segurança. O serviço com ${selectedProfessional.name} foi agendado.`);
-    
-    setModalOpen(false);
-    setCurrentPage('client-dashboard');
+    try {
+        await acceptProposalService(taskId, selectedProposal.id, selectedProposal.professionals.id);
+        alert(`Proposta aceita! O pagamento foi processado com segurança. O serviço com ${selectedProposal.professionals.name} foi agendado.`);
+        setModalOpen(false);
+        setCurrentPage('client-dashboard');
+    } catch (err) {
+        alert("Ocorreu um erro ao aceitar a proposta. Tente novamente.");
+        console.error(err);
+    }
   };
 
+
+  const renderContent = () => {
+    if (loading) {
+        return <div className="flex justify-center items-center h-64"><SpinnerIcon className="h-10 w-10 animate-spin text-[#2A8C82]" /></div>;
+    }
+    if (error) {
+        return <div className="text-center py-10 text-red-600">{error}</div>;
+    }
+    if (proposals.length === 0) {
+        return <div className="text-center py-10 text-gray-600">Ainda não há propostas para esta tarefa.</div>;
+    }
+    return (
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {proposals.map(prop => (
+            <ProposalCard 
+              key={prop.id}
+              professional={{ ...prop.professionals, price: prop.price, message: prop.message }}
+              onAccept={() => handleAcceptClick(prop)}
+              onChat={() => alert(`Iniciando chat com ${prop.professionals.name}`)}
+              setCurrentPage={setCurrentPage}
+            />
+          ))}
+        </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -56,19 +109,9 @@ const CompareProposalsPage: React.FC<CompareProposalsPageProps> = ({ taskId, set
         </button>
         
         <h1 className="text-3xl font-bold text-gray-800">Compare as Propostas</h1>
-        <p className="mt-2 text-lg text-gray-600">Para: <span className="font-semibold">{data.taskTitle}</span></p>
+        <p className="mt-2 text-lg text-gray-600">Para: <span className="font-semibold">{taskTitle}</span></p>
 
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {data.proposals.map(prof => (
-            <ProposalCard 
-              key={prof.id}
-              professional={prof}
-              onAccept={() => handleAcceptClick(prof)}
-              onChat={() => alert(`Iniciando chat com ${prof.name}`)}
-              setCurrentPage={setCurrentPage}
-            />
-          ))}
-        </div>
+        {renderContent()}
 
         <div className="mt-12 bg-green-50 border border-green-200 rounded-lg p-6 flex items-start">
             <ShieldCheckIcon className="h-8 w-8 text-green-600 flex-shrink-0 mr-4" />
@@ -82,13 +125,13 @@ const CompareProposalsPage: React.FC<CompareProposalsPageProps> = ({ taskId, set
 
       </main>
       
-      {selectedProfessional && (
+      {selectedProposal && (
         <AcceptProposalModal 
             isOpen={isModalOpen}
             onClose={() => setModalOpen(false)}
             onConfirm={handleConfirmAcceptance}
-            professional={selectedProfessional}
-            taskTitle={data.taskTitle}
+            professional={{...selectedProposal.professionals, price: selectedProposal.price}}
+            taskTitle={taskTitle}
         />
       )}
     </div>

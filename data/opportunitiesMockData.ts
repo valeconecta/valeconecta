@@ -1,7 +1,6 @@
 import { professionals } from './professionals';
 import { proposalsByTaskId } from './clientMockData';
 import { financialData } from './professionalMockData';
-// FIX: Import getProfessionalById to retrieve full professional details.
 import { getProfessionalById } from './professionalProfileMockData';
 
 export interface Opportunity {
@@ -112,7 +111,6 @@ export const getOpportunityById = (id: number): Opportunity | undefined => {
 
 export const submitProposal = (opportunityId: number, professionalId: number, proposal: { message: string, price: number }) => {
     const opportunity = opportunities.find(op => op.id === opportunityId);
-    // FIX: Use getProfessionalById to get the full detailed profile.
     const professional = getProfessionalById(professionalId);
 
     if (!opportunity) throw new Error("Oportunidade não encontrada.");
@@ -135,7 +133,6 @@ export const submitProposal = (opportunityId: number, professionalId: number, pr
         message: proposal.message,
     };
     
-    // FIX: Removed unsafe type casting and use numeric key directly.
     if (proposalsByTaskId[opportunityId]) {
         proposalsByTaskId[opportunityId].proposals.push(newProposal);
     } else {

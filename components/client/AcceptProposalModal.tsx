@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { XIcon, ShieldCheckIcon } from '../Icons';
-import { DetailedProfessional } from '../../data/professionalProfileMockData';
+import { DetailedProfessional } from '../../types';
 
 interface AcceptProposalModalProps {
   isOpen: boolean;

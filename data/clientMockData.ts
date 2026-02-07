@@ -1,6 +1,5 @@
 import { professionals } from './professionals';
 import { opportunities } from './opportunitiesMockData';
-// FIX: Import DetailedProfessional and the function to get it.
 import { DetailedProfessional, getProfessionalById } from './professionalProfileMockData';
 
 export const dashboardData = {
@@ -93,13 +92,11 @@ export const acceptProposal = (taskId: number, professionalId: number) => {
     });
 };
 
-// FIX: Define a type for the proposal data.
 interface ProposalData {
     taskTitle: string;
     proposals: (DetailedProfessional & { price: number; message: string; })[];
 }
 
-// FIX: Use an index signature for numeric keys and populate with DetailedProfessional.
 export const proposalsByTaskId: { [key: number]: ProposalData } = {
     1: {
         taskTitle: 'Instalação de chuveiro elétrico',

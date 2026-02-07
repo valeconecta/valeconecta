@@ -1,11 +1,10 @@
-
-import React, { useState } from 'react';
-import { getProfessionalById, DetailedProfessional } from '../data/professionalProfileMockData';
-import { Page } from '../types';
-import { AwardIcon, CalendarDaysIcon, CheckCircleIcon, MessageCircleIcon, ShieldCheckIcon, StarIcon, ToolboxIcon } from '../components/Icons';
+import React, { useState, useEffect } from 'react';
+import { Page, DetailedProfessional } from '../types';
+import { AwardIcon, CalendarDaysIcon, CheckCircleIcon, MessageCircleIcon, ShieldCheckIcon, StarIcon, ToolboxIcon, SpinnerIcon } from '../components/Icons';
 import ReviewCard from '../components/profile/ReviewCard';
-import { MedalhaType } from '../data/professionals';
+import { MedalhaType } from '../types';
 import RequestProposalModal from '../components/profile/RequestProposalModal';
+import { getProfessionalById } from '../supabaseService';
 
 interface ProfessionalProfilePageProps {
   professionalId: number;
@@ -28,13 +27,43 @@ const MedalhaIcon: React.FC<{ medalha: MedalhaType, className?: string }> = ({ m
 
 const ProfessionalProfilePage: React.FC<ProfessionalProfilePageProps> = ({ professionalId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const professional = getProfessionalById(professionalId);
+  const [professional, setProfessional] = useState<DetailedProfessional | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!professional) {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getProfessionalById(professionalId);
+        if (!data) {
+          throw new Error('Profissional não encontrado');
+        }
+        setProfessional(data);
+      } catch (err) {
+        setError('Não foi possível carregar o perfil do profissional.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [professionalId]);
+  
+  if (loading) {
+    return (
+        <div className="min-h-screen flex items-center justify-center">
+            <SpinnerIcon className="h-12 w-12 animate-spin text-[#2A8C82]" />
+        </div>
+    );
+  }
+
+  if (error || !professional) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
-        <h1 className="text-2xl font-bold">Profissional não encontrado</h1>
-        <p className="text-gray-600 mt-2">O perfil que você está tentando acessar não existe ou foi removido.</p>
+        <h1 className="text-2xl font-bold">Perfil não encontrado</h1>
+        <p className="text-gray-600 mt-2">{error || 'O perfil que você está tentando acessar não existe ou foi removido.'}</p>
       </div>
     );
   }
@@ -50,19 +79,19 @@ const ProfessionalProfilePage: React.FC<ProfessionalProfilePageProps> = ({ profe
 
   const StickyInfoCard = () => (
     <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-6 text-center">
-      <img src={photoUrl} alt={name} className="w-32 h-32 rounded-full mx-auto ring-4 ring-[#2A8C82]/50" />
+      <img src={photoUrl || `https://i.pravatar.cc/150?img=${professionalId}`} alt={name} className="w-32 h-32 rounded-full mx-auto ring-4 ring-[#2A8C82]/50" />
       <h1 className="text-3xl font-bold text-gray-800 mt-4">{name}</h1>
       <div className="mt-2 flex items-center justify-center space-x-2 text-green-600 font-semibold">
         <ShieldCheckIcon className="h-5 w-5" />
         <span>Identidade Verificada</span>
       </div>
       <ul className="text-left text-gray-600 space-y-3 mt-6">
-        <li className="flex items-center"><CheckCircleIcon className="h-5 w-5 text-[#2A8C82] mr-3" /> {reviewCount} serviços realizados na plataforma</li>
-        <li className="flex items-center"><MessageCircleIcon className="h-5 w-5 text-[#2A8C82] mr-3" /> Taxa de resposta: {responseRate}%</li>
-        <li className="flex items-center"><CalendarDaysIcon className="h-5 w-5 text-[#2A8C82] mr-3" /> Membro desde: {memberSince}</li>
+        <li className="flex items-center"><CheckCircleIcon className="h-5 w-5 text-[#2A8C82] mr-3" /> {(reviewCount || 0)} serviços realizados na plataforma</li>
+        <li className="flex items-center"><MessageCircleIcon className="h-5 w-5 text-[#2A8C82] mr-3" /> Taxa de resposta: {(responseRate || 0)}%</li>
+        <li className="flex items-center"><CalendarDaysIcon className="h-5 w-5 text-[#2A8C82] mr-3" /> Membro desde: {memberSince || '2023'}</li>
       </ul>
       <p className="text-3xl font-extrabold text-gray-800 mt-6">
-        A partir de {pricePerHour.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}<span className="text-lg font-medium text-gray-500">/h</span>
+        A partir de {(pricePerHour || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}<span className="text-lg font-medium text-gray-500">/h</span>
       </p>
       <button 
         onClick={() => setIsModalOpen(true)}
@@ -101,14 +130,14 @@ const ProfessionalProfilePage: React.FC<ProfessionalProfilePageProps> = ({ profe
                         <h2 className="text-lg font-bold text-gray-800">Avaliação Geral</h2>
                         <div className="flex items-center mt-2">
                            <StarIcon className="h-7 w-7 text-yellow-400" />
-                           <span className="text-3xl font-extrabold text-gray-800 ml-2">{rating.toFixed(2)}</span>
-                           <span className="text-gray-500 ml-2"> de 5 ({reviewCount} avaliações)</span>
+                           <span className="text-3xl font-extrabold text-gray-800 ml-2">{(rating || 0).toFixed(2)}</span>
+                           <span className="text-gray-500 ml-2"> de 5 ({(reviewCount || 0)} avaliações)</span>
                         </div>
                     </div>
                      <div className="border-t sm:border-t-0 sm:border-l border-gray-200 pl-0 sm:pl-6 pt-4 sm:pt-0">
                         <h2 className="text-lg font-bold text-gray-800 text-center sm:text-left mb-3">Medalhas</h2>
                          <div className="flex items-center justify-center space-x-4">
-                             {medalhas.map(medalha => <MedalhaIcon key={medalha} medalha={medalha} className="w-8 h-8 text-[#2A8C82]" />)}
+                             {(medalhas || []).map(medalha => <MedalhaIcon key={medalha} medalha={medalha} className="w-8 h-8 text-[#2A8C82]" />)}
                         </div>
                     </div>
                  </div>
@@ -117,21 +146,21 @@ const ProfessionalProfilePage: React.FC<ProfessionalProfilePageProps> = ({ profe
               {/* Sobre */}
               <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-xl font-bold text-gray-800">Sobre {name}</h2>
-                <p className="mt-4 text-gray-600 whitespace-pre-line leading-relaxed">{bio}</p>
+                <p className="mt-4 text-gray-600 whitespace-pre-line leading-relaxed">{bio || 'Nenhuma biografia fornecida.'}</p>
               </div>
 
               {/* Serviços */}
               <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-xl font-bold text-gray-800">Serviços Oferecidos</h2>
                 <div className="mt-4 flex flex-wrap gap-2">
-                    {services.map(service => (
+                    {(services || []).map(service => (
                         <span key={service} className="bg-[#E8F3F1] text-[#2A8C82] text-sm font-semibold px-3 py-1.5 rounded-full">{service}</span>
                     ))}
                 </div>
               </div>
 
               {/* Gallery */}
-              {gallery.length > 0 && (
+              {gallery && gallery.length > 0 && (
                 <div className="bg-white border border-gray-200 rounded-xl p-6">
                   <h2 className="text-xl font-bold text-gray-800">Galeria de Projetos</h2>
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -152,7 +181,11 @@ const ProfessionalProfilePage: React.FC<ProfessionalProfilePageProps> = ({ profe
                     </select>
                 </div>
                 <div className="space-y-6">
-                    {reviews.map(review => <ReviewCard key={review.id} review={review} />)}
+                    {(reviews || []).length > 0 ? (
+                        reviews.map(review => <ReviewCard key={review.id} review={review} />)
+                    ) : (
+                        <p className="text-center text-gray-500 py-4">Este profissional ainda não recebeu avaliações.</p>
+                    )}
                 </div>
               </div>
 

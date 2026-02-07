@@ -1,7 +1,8 @@
-
 import React, { useState } from 'react';
 import { Page } from '../types';
-import { getOpportunityById, submitProposal } from '../data/opportunitiesMockData';
+import { getOpportunityById } from '../data/opportunitiesMockData';
+import { createProposal } from '../supabaseService';
+import { useAuth } from '../AuthContext';
 import { ArrowLeftIcon, CalendarDaysIcon, PackageIcon, SparklesIcon, UsersIcon } from '../components/Icons';
 import SuccessToast from '../components/client/SuccessToast';
 
@@ -14,9 +15,12 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
     const [message, setMessage] = useState('');
     const [price, setPrice] = useState('');
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const { profile } = useAuth();
     const opportunity = getOpportunityById(opportunityId);
     
-    // Mocked professional ID, in a real app this would come from the logged-in user context
+    // Em um app real, o ID do profissional viria do perfil do usuário logado.
+    // O `profile.id` no `useAuth` é o `user_id` (UUID), mas precisamos do ID da tabela `professionals` (serial).
+    // Para este mock, assumiremos um mapeamento ou um valor fixo.
     const professionalId = 1; 
 
     if (!opportunity) {
@@ -27,10 +31,19 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
         );
     }
     
-    const handleSubmitProposal = (e: React.FormEvent) => {
+    const handleSubmitProposal = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!profile || profile.role !== 'PROFESSIONAL') {
+            alert("Apenas profissionais podem enviar propostas.");
+            return;
+        }
         try {
-            submitProposal(opportunityId, professionalId, { message, price: parseFloat(price) });
+            await createProposal({
+                taskId: opportunityId, 
+                professionalId: professionalId, // Usar o ID correto aqui
+                message: message, 
+                price: parseFloat(price) 
+            });
             setSuccessMessage('Proposta enviada com sucesso! O cliente foi notificado.');
             setTimeout(() => {
                 setCurrentPage('opportunities');

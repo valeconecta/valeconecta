@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Professional, MedalhaType } from '../../data/professionals';
+import { Professional, MedalhaType } from '../../types';
 import { AwardIcon, ClockIcon, StarIcon, ToolboxIcon } from '../Icons';
 import { Page } from '../../types';
 
@@ -28,26 +27,28 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, setCu
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col">
       <div className="p-6 flex-grow">
         <div className="flex items-start space-x-4">
-            <img src={professional.photoUrl} alt={professional.name} className="w-16 h-16 rounded-full" />
+            <img src={professional.photoUrl || `https://i.pravatar.cc/150?img=${professional.id}`} alt={professional.name} className="w-16 h-16 rounded-full" />
             <div className="flex-1">
                 <h3 className="text-xl font-bold text-[#333333]">{professional.name}</h3>
                 <div className="flex items-center mt-1 text-sm text-[#666666]">
                     <StarIcon className="w-5 h-5 text-[#FFD700] mr-1" />
-                    <span className="font-bold text-[#333333]">{professional.rating.toFixed(1)}</span>
-                    <span className="ml-1">({professional.reviewCount} avaliações)</span>
+                    <span className="font-bold text-[#333333]">{(professional.rating || 0).toFixed(1)}</span>
+                    <span className="ml-1">({professional.reviewCount || 0} avaliações)</span>
                 </div>
             </div>
         </div>
         
+        {/*
         <div className="flex items-center space-x-2 mt-4">
-            {professional.medalhas.slice(0, 3).map(medalha => (
+            {(professional.medalhas || []).slice(0, 3).map(medalha => (
                 <MedalhaIcon key={medalha} medalha={medalha} className="w-6 h-6 text-[#2A8C82]" />
             ))}
         </div>
+        */}
 
         <div className="mt-4">
           <p className="text-2xl font-extrabold text-[#333333]">
-            {professional.pricePerHour.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}<span className="text-base font-medium text-[#666666]">/h</span>
+            {(professional.pricePerHour || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}<span className="text-base font-medium text-[#666666]">/h</span>
           </p>
         </div>
 

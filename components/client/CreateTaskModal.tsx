@@ -1,9 +1,9 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
 import { XIcon, ImageIcon, SpinnerIcon, Trash2Icon } from '../Icons';
 import { categories } from '../../data/professionals';
-import { userProfile, addTask } from '../../data/clientMockData';
+import { createTask, getAddressesByUserId } from '../../supabaseService';
+import { useAuth } from '../../AuthContext';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -19,31 +19,48 @@ interface TaskData {
     deadline: string;
 }
 
+interface Address {
+  id: number;
+  name: string;
+  full_address: string;
+}
+
 const STEPS = ['Descrição', 'Detalhes', 'Revisão'];
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTaskCreated }) => {
+    const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
+    const [userAddresses, setUserAddresses] = useState<Address[]>([]);
     const [taskData, setTaskData] = useState<TaskData>({
         description: '',
         category: '',
         photos: [],
-        address: userProfile.addresses[0]?.fullAddress || '',
+        address: '',
         deadline: 'O mais rápido possível'
     });
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-      // Reset state when modal opens
-      if (isOpen) {
-        setCurrentStep(0);
-        setTaskData({
-          description: '', category: '', photos: [],
-          address: userProfile.addresses[0]?.fullAddress || '',
-          deadline: 'O mais rápido possível'
-        });
-      }
-    }, [isOpen]);
+      const fetchAddressesAndReset = async () => {
+        if (isOpen && user) {
+          try {
+            const addresses = await getAddressesByUserId(user.id);
+            setUserAddresses(addresses || []);
+            // Reset state when modal opens
+            setCurrentStep(0);
+            setTaskData({
+              description: '', category: '', photos: [],
+              address: addresses?.[0]?.full_address || '',
+              deadline: 'O mais rápido possível'
+            });
+          } catch (error) {
+            console.error("Failed to fetch user addresses:", error);
+          }
+        }
+      };
+      fetchAddressesAndReset();
+    }, [isOpen, user]);
     
     if (!isOpen) return null;
 
@@ -80,7 +97,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
                 }
             });
 
-            // FIX: The API response for JSON can sometimes be wrapped in markdown. This cleans the string before parsing.
             if (response.text) {
                 const cleanedText = response.text.trim().replace(/^```json\s*|```\s*$/g, '');
                 const result = JSON.parse(cleanedText) as { categoria: string };
@@ -99,7 +115,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files).slice(0, 4 - taskData.photos.length);
-            // FIX: Explicitly typing `file` as `File` to resolve type inference issue.
             const newPhotos = files.map((file: File) => ({
                 name: file.name,
                 url: URL.createObjectURL(file)
@@ -116,9 +131,22 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
         }
     };
 
-    const handlePublish = () => {
-        addTask({ description: taskData.description, category: taskData.category });
-        onTaskCreated();
+    const handlePublish = async () => {
+        if (!user) {
+            alert("Você precisa estar logado para criar uma tarefa.");
+            return;
+        }
+        try {
+            await createTask({ 
+                description: taskData.description, 
+                category: taskData.category,
+                clientId: user.id
+            });
+            onTaskCreated();
+        } catch (error) {
+            alert("Houve um erro ao publicar sua tarefa. Tente novamente.");
+            console.error(error);
+        }
     };
 
     const renderStepContent = () => {
@@ -150,7 +178,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Endereço do Serviço</label>
                             <select value={taskData.address} onChange={e => handleDataChange('address', e.target.value)} className="w-full mt-1 p-2 border border-gray-300 rounded-md">
-                                {userProfile.addresses.map(addr => <option key={addr.id} value={addr.fullAddress}>{addr.name} - {addr.fullAddress}</option>)}
+                                {userAddresses.map(addr => <option key={addr.id} value={addr.full_address}>{addr.name} - {addr.full_address}</option>)}
                             </select>
                         </div>
                         <div>

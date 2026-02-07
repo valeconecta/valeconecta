@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import FiltersPanel from '../components/search/FiltersPanel';
 import ProfessionalCard from '../components/search/ProfessionalCard';
 import { MenuIcon, SpinnerIcon } from '../components/Icons';
-import { Page } from '../types';
-import { supabase } from '../supabaseClient';
-import { Professional } from '../data/professionals';
+import { Page, Professional } from '../types';
+import { getProfessionals } from '../supabaseService';
 
 interface SearchPageProps {
     setCurrentPage: (page: Page, id?: number) => void;
@@ -16,24 +15,20 @@ const SearchPage: React.FC<SearchPageProps> = ({ setCurrentPage }) => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchProfessionals = async () => {
+        const fetchProfessionalsData = async () => {
             setLoading(true);
             setError(null);
-
-            const { data, error } = await supabase
-                .from('professionals')
-                .select('*');
-
-            if (error) {
-                console.error('Error fetching professionals:', error);
-                setError('Não foi possível carregar os profissionais. Tente novamente mais tarde.');
-            } else {
+            try {
+                const data = await getProfessionals();
                 setProfessionals(data || []);
+            } catch (err) {
+                 console.error('Error fetching professionals:', err);
+                setError('Não foi possível carregar os profissionais. Tente novamente mais tarde.');
             }
             setLoading(false);
         };
 
-        fetchProfessionals();
+        fetchProfessionalsData();
     }, []);
 
     const totalProfessionals = professionals.length;
@@ -60,7 +55,7 @@ const SearchPage: React.FC<SearchPageProps> = ({ setCurrentPage }) => {
             return (
                 <div className="text-center h-64 flex flex-col justify-center items-center bg-gray-100 rounded-lg p-4">
                      <p className="text-gray-800 font-semibold">Nenhum profissional encontrado</p>
-                     <p className="text-gray-600 mt-2">Tente ajustar seus filtros ou verifique se há dados na tabela 'professionals' do Supabase.</p>
+                     <p className="text-gray-600 mt-2">Tente ajustar seus filtros ou verifique se há profissionais cadastrados.</p>
                 </div>
             );
         }

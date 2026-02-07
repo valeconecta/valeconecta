@@ -1,9 +1,9 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Chatbot from '../components/Chatbot';
-import { BroomIcon, LeafIcon, PaintBrushIcon, ShieldCheckIcon, StarIcon, WrenchIcon } from '../components/Icons';
-import { Page } from '../types';
-import { professionals, Professional } from '../data/professionals';
+import { BroomIcon, LeafIcon, PaintBrushIcon, ShieldCheckIcon, StarIcon, WrenchIcon, SpinnerIcon } from '../components/Icons';
+import { Page, Professional } from '../types';
+import { getProfessionals } from '../supabaseService';
+
 
 interface HomePageProps {
   setCurrentPage: (page: Page, id?: number) => void;
@@ -34,15 +34,15 @@ const TestimonialCard: React.FC<{ quote: string; name: string; service: string }
 const FeaturedProfessionalCard: React.FC<{ professional: Professional; setCurrentPage: (page: Page, id?: number) => void; }> = ({ professional, setCurrentPage }) => (
   <div className="bg-white rounded-xl border border-gray-200 text-center overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
     <div className="relative h-40">
-        <img src={professional.photoUrl} alt={professional.name} className="w-full h-full object-cover" />
+        <img src={professional.photoUrl || `https://i.pravatar.cc/150?img=${professional.id}`} alt={professional.name} className="w-full h-full object-cover" />
     </div>
     <div className="p-5">
         <h3 className="font-bold text-lg text-gray-800 truncate">{professional.name}</h3>
-        <p className="font-semibold text-sm text-[#2A8C82] mt-1">{professional.category}</p>
+        <p className="font-semibold text-sm text-[#2A8C82] mt-1">{professional.category || 'Não especificado'}</p>
         <div className="flex items-center justify-center mt-2 text-sm text-gray-500">
             <StarIcon className="w-4 h-4 text-yellow-400 mr-1" />
-            <span className="font-bold text-gray-700">{professional.rating.toFixed(1)}</span>
-            <span className="ml-1">({professional.reviewCount})</span>
+            <span className="font-bold text-gray-700">{(professional.rating || 0).toFixed(1)}</span>
+            <span className="ml-1">({professional.reviewCount || 0})</span>
         </div>
         <button 
             onClick={() => setCurrentPage('professional-profile', professional.id)}
@@ -55,6 +55,25 @@ const FeaturedProfessionalCard: React.FC<{ professional: Professional; setCurren
 );
 
 const HomePage: React.FC<HomePageProps> = ({setCurrentPage}) => {
+  const [featuredProfessionals, setFeaturedProfessionals] = useState<Professional[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        setLoading(true);
+        const pros = await getProfessionals({ limit: 8 });
+        setFeaturedProfessionals(pros);
+      } catch (error) {
+        console.error("Failed to fetch featured professionals", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeatured();
+  }, []);
+
+
   return (
     <>
       {/* Hero Section */}
@@ -96,11 +115,17 @@ const HomePage: React.FC<HomePageProps> = ({setCurrentPage}) => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-[#333333]">Profissionais em Destaque</h2>
           <p className="mt-4 text-lg text-[#666666] max-w-2xl mx-auto">Conheça alguns dos nossos melhores talentos, avaliados pela comunidade.</p>
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {professionals.slice(0, 8).map(prof => (
-                <FeaturedProfessionalCard key={prof.id} professional={prof} setCurrentPage={setCurrentPage} />
-            ))}
-          </div>
+          {loading ? (
+             <div className="flex justify-center items-center h-40">
+                <SpinnerIcon className="h-10 w-10 animate-spin text-[#2A8C82]" />
+            </div>
+          ) : (
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {featuredProfessionals.map(prof => (
+                  <FeaturedProfessionalCard key={prof.id} professional={prof} setCurrentPage={setCurrentPage} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
       
