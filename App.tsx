@@ -16,6 +16,8 @@ import OpportunitiesPage from './pages/OpportunitiesPage';
 import OpportunityDetailPage from './pages/OpportunityDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 import { AuthProvider, useAuth } from './AuthContext';
 import { SpinnerIcon } from './components/Icons';
 import { Role } from './auth/enums/role.enum';
@@ -64,7 +66,7 @@ const AppContent: React.FC = () => {
     );
   }
   
-  const publicPages: Page[] = ['home', 'professional', 'plus', 'search', 'login', 'register', 'professional-profile'];
+  const publicPages: Page[] = ['home', 'professional', 'plus', 'search', 'login', 'register', 'professional-profile', 'privacy', 'terms'];
   const isProtectedPage = !publicPages.includes(currentPage);
   
   if (!session && isProtectedPage) {
@@ -108,6 +110,8 @@ const AppContent: React.FC = () => {
       case 'compare-proposals':
         if(selectedTaskId) return <CompareProposalsPage taskId={selectedTaskId} setCurrentPage={handleSetPage} />;
         return <ClientDashboardPage setCurrentPage={handleSetPage} />; // Fallback
+      case 'privacy': return <PrivacyPolicyPage />;
+      case 'terms': return <TermsOfServicePage />;
       default:
         // If logged in, go to dashboard, else home
         if (session) {

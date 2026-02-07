@@ -105,7 +105,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ setCurrentPage }) => {
           <div className="flex items-center">
             <input id="terms" name="terms" type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)} className="h-4 w-4 text-[#2A8C82] focus:ring-[#2A8C82] border-gray-300 rounded" />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-              Eu li e aceito os <a href="#" className="font-medium text-[#2A8C82] hover:text-[#206961]">Termos de Serviço</a>
+              Eu li e aceito os <button type="button" onClick={() => setCurrentPage('terms')} className="font-medium text-[#2A8C82] hover:text-[#206961] underline">Termos de Serviço</button>
             </label>
           </div>
           

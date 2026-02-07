@@ -1,6 +1,9 @@
 
 import { Professional, MedalhaType } from '../types';
 
+// FIX: Re-export MedalhaType so it can be imported by other modules.
+export type { MedalhaType };
+
 export const categories = [
     'Montagem de Móveis',
     'Pintura',

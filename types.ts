@@ -1,4 +1,4 @@
-export type Page = 'home' | 'professional' | 'plus' | 'search' | 'admin' | 'professional-dashboard' | 'professional-profile' | 'client-dashboard' | 'compare-proposals' | 'task-detail' | 'opportunities' | 'opportunity-detail' | 'login' | 'register';
+export type Page = 'home' | 'professional' | 'plus' | 'search' | 'admin' | 'professional-dashboard' | 'professional-profile' | 'client-dashboard' | 'compare-proposals' | 'task-detail' | 'opportunities' | 'opportunity-detail' | 'login' | 'register' | 'privacy' | 'terms';
 
 export type MedalhaType = 'Mestre da Montagem' | 'Super Pontual' | 'Excelência em Avaliações' | 'Top Pro';
 

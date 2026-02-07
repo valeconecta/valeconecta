@@ -39,8 +39,8 @@ const Footer: React.FC<FooterProps> = ({ setCurrentPage }) => {
           <div>
             <h3 className="text-sm font-semibold tracking-wider uppercase">Legal</h3>
             <ul className="mt-4 space-y-2">
-              <li><a href="#" className="text-base text-[#666666] hover:text-[#2A8C82]">Termos de Serviço</a></li>
-              <li><a href="#" className="text-base text-[#666666] hover:text-[#2A8C82]">Política de Privacidade</a></li>
+              <li><button onClick={() => setCurrentPage('terms')} className="text-base text-[#666666] hover:text-[#2A8C82]">Termos de Serviço</button></li>
+              <li><button onClick={() => setCurrentPage('privacy')} className="text-base text-[#666666] hover:text-[#2A8C82]">Política de Privacidade</button></li>
                <li><button onClick={() => setCurrentPage('admin')} className="text-base text-[#666666] hover:text-[#2A8C82]">Painel do Administrador</button></li>
             </ul>
           </div>
