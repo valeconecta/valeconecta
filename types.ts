@@ -1,2 +1,2 @@
 
-export type Page = 'home' | 'professional' | 'plus' | 'search' | 'admin' | 'professional-dashboard' | 'professional-profile' | 'client-dashboard' | 'compare-proposals' | 'task-detail' | 'opportunities' | 'opportunity-detail';
+export type Page = 'home' | 'professional' | 'plus' | 'search' | 'admin' | 'professional-dashboard' | 'professional-profile' | 'client-dashboard' | 'compare-proposals' | 'task-detail' | 'opportunities' | 'opportunity-detail' | 'login' | 'register';

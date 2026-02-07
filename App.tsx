@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Page } from './types';
 import Header from './components/Header';
@@ -15,12 +14,35 @@ import CompareProposalsPage from './pages/CompareProposalsPage';
 import TaskDetailPage from './pages/TaskDetailPage';
 import OpportunitiesPage from './pages/OpportunitiesPage';
 import OpportunityDetailPage from './pages/OpportunityDetailPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import { AuthProvider, useAuth } from './AuthContext';
+import { SpinnerIcon } from './components/Icons';
+import { Role } from './auth/enums/role.enum';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const [currentUserRole, setCurrentUserRole] = useState<'client' | 'professional'>('client');
+  const { session, loading, profile } = useAuth();
+  
+  // Handle page changes after login/logout
+  React.useEffect(() => {
+    if (!loading && !session && (currentPage.includes('dashboard') || currentPage.includes('compare') || currentPage.includes('detail') || currentPage === 'admin')) {
+        setCurrentPage('login');
+    }
+    if (!loading && session && (currentPage === 'login' || currentPage === 'register')) {
+        if (profile?.role === Role.CLIENT) {
+            setCurrentPage('client-dashboard');
+        } else if (profile?.role === Role.PROFESSIONAL) {
+            setCurrentPage('professional-dashboard');
+        } else if (profile?.role === Role.ADMIN) {
+            setCurrentPage('admin');
+        } else {
+            setCurrentPage('home');
+        }
+    }
+  }, [session, loading, profile, currentPage]);
 
 
   const handleSetPage = (page: Page, id?: number) => {
@@ -31,64 +53,68 @@ const App: React.FC = () => {
     if ((page === 'compare-proposals' || page === 'task-detail' || page === 'opportunity-detail') && id !== undefined) {
       setSelectedTaskId(id);
     }
-    if (page === 'client-dashboard') {
-      setCurrentUserRole('client');
-    }
-    if (page === 'professional-dashboard' || page === 'opportunities') {
-      setCurrentUserRole('professional');
-    }
     window.scrollTo(0, 0);
   };
-
-  // Render AdminPage with its own layout
-  if (currentPage === 'admin') {
-    return <AdminPage setCurrentPage={handleSetPage} />;
-  }
-
-  // Render ProfessionalDashboardPage with its own layout
-  if (currentPage === 'professional-dashboard') {
-    return <ProfessionalDashboardPage setCurrentPage={handleSetPage} />;
+  
+  if (loading) {
+    return (
+        <div className="min-h-screen flex items-center justify-center">
+            <SpinnerIcon className="h-12 w-12 animate-spin text-[#2A8C82]" />
+        </div>
+    );
   }
   
-  // Render ClientDashboardPage with its own layout
-  if (currentPage === 'client-dashboard') {
-      return <ClientDashboardPage setCurrentPage={handleSetPage} />;
+  const publicPages: Page[] = ['home', 'professional', 'plus', 'search', 'login', 'register', 'professional-profile'];
+  const isProtectedPage = !publicPages.includes(currentPage);
+  
+  if (!session && isProtectedPage) {
+      // Redirect to login but keep the page logic simple
+      if (currentPage !== 'login') {
+          setCurrentPage('login');
+      }
+      return <LoginPage setCurrentPage={handleSetPage} />;
   }
 
-  // Render TaskDetailPage with its own layout
-  if (currentPage === 'task-detail' && selectedTaskId) {
-    return <TaskDetailPage taskId={selectedTaskId} currentUserRole={currentUserRole} setCurrentPage={handleSetPage} />;
+  // Define pages that don't need the standard Header/Footer layout
+  const fullScreenPages: Page[] = ['admin', 'professional-dashboard', 'client-dashboard', 'task-detail', 'opportunity-detail', 'login', 'register'];
+  if (fullScreenPages.includes(currentPage)) {
+    switch (currentPage) {
+      case 'admin': return <AdminPage setCurrentPage={handleSetPage} />;
+      case 'professional-dashboard': return <ProfessionalDashboardPage setCurrentPage={handleSetPage} />;
+      case 'client-dashboard': return <ClientDashboardPage setCurrentPage={handleSetPage} />;
+      case 'task-detail':
+        if(selectedTaskId && profile) return <TaskDetailPage taskId={selectedTaskId} currentUserRole={profile.role === Role.CLIENT ? 'client' : 'professional'} setCurrentPage={handleSetPage} />;
+        return <HomePage setCurrentPage={handleSetPage} />; // Fallback
+      case 'opportunity-detail':
+        if(selectedTaskId) return <OpportunityDetailPage opportunityId={selectedTaskId} setCurrentPage={handleSetPage} />;
+        return <OpportunitiesPage setCurrentPage={handleSetPage} />; // Fallback
+      case 'login': return <LoginPage setCurrentPage={handleSetPage} />;
+      case 'register': return <RegisterPage setCurrentPage={handleSetPage} />;
+      default: return <HomePage setCurrentPage={handleSetPage} />;
+    }
   }
 
-  // Render OpportunityDetailPage with its own layout
-  if (currentPage === 'opportunity-detail' && selectedTaskId) {
-    return <OpportunityDetailPage opportunityId={selectedTaskId} setCurrentPage={handleSetPage} />;
-  }
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'home':
-        return <HomePage setCurrentPage={handleSetPage} />;
-      case 'professional':
-        return <ProfessionalPage setCurrentPage={handleSetPage} />;
-      case 'plus':
-        return <PlusPage />;
-      case 'search':
-        return <SearchPage setCurrentPage={handleSetPage} />;
-      case 'opportunities':
-        return <OpportunitiesPage setCurrentPage={handleSetPage} />;
+      case 'home': return <HomePage setCurrentPage={handleSetPage} />;
+      case 'professional': return <ProfessionalPage setCurrentPage={handleSetPage} />;
+      case 'plus': return <PlusPage />;
+      case 'search': return <SearchPage setCurrentPage={handleSetPage} />;
+      case 'opportunities': return <OpportunitiesPage setCurrentPage={handleSetPage} />;
       case 'professional-profile':
-        if (selectedProfessionalId) {
-          return <ProfessionalProfilePage professionalId={selectedProfessionalId} setCurrentPage={handleSetPage} />;
-        }
+        if (selectedProfessionalId) return <ProfessionalProfilePage professionalId={selectedProfessionalId} setCurrentPage={handleSetPage} />;
         return <SearchPage setCurrentPage={handleSetPage} />;
       case 'compare-proposals':
-        if(selectedTaskId) {
-            return <CompareProposalsPage taskId={selectedTaskId} setCurrentPage={handleSetPage} />;
-        }
-        // Fallback if no task id is provided
-        return <ClientDashboardPage setCurrentPage={handleSetPage} />;
+        if(selectedTaskId) return <CompareProposalsPage taskId={selectedTaskId} setCurrentPage={handleSetPage} />;
+        return <ClientDashboardPage setCurrentPage={handleSetPage} />; // Fallback
       default:
+        // If logged in, go to dashboard, else home
+        if (session) {
+            if (profile?.role === Role.CLIENT) { setCurrentPage('client-dashboard'); return null; }
+            if (profile?.role === Role.PROFESSIONAL) { setCurrentPage('professional-dashboard'); return null; }
+            if (profile?.role === Role.ADMIN) { setCurrentPage('admin'); return null; }
+        }
         return <HomePage setCurrentPage={handleSetPage} />;
     }
   };
@@ -103,5 +129,12 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+
+const App: React.FC = () => (
+  <AuthProvider>
+    <AppContent />
+  </AuthProvider>
+);
 
 export default App;
