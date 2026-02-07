@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Chatbot from '../components/Chatbot';
 import { BroomIcon, LeafIcon, PaintBrushIcon, ShieldCheckIcon, StarIcon, WrenchIcon, SpinnerIcon } from '../components/Icons';
@@ -9,10 +10,11 @@ interface HomePageProps {
   setCurrentPage: (page: Page, id?: number) => void;
 }
 
-const CategoryCard: React.FC<{ icon: React.ReactNode; title: string; }> = ({ icon, title }) => (
+// FIX: Changed icon prop type to React.ReactElement for type safety with cloneElement.
+const CategoryCard: React.FC<{ icon: React.ReactElement; title: string; }> = ({ icon, title }) => (
   <div className="group text-center p-6 bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer">
     <div className="inline-block p-4 bg-[#E8F3F1] rounded-full group-hover:bg-[#2A8C82] transition-colors duration-300">
-      {React.cloneElement(icon as React.ReactElement, { className: "h-8 w-8 text-[#2A8C82] group-hover:text-white transition-colors duration-300" })}
+      {React.cloneElement(icon, { className: "h-8 w-8 text-[#2A8C82] group-hover:text-white transition-colors duration-300" })}
     </div>
     <h3 className="mt-4 font-semibold text-[#333333]">{title}</h3>
   </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Page } from '../../../types';
 import { supabase } from '../../../supabaseClient';
@@ -18,7 +19,7 @@ interface SupabaseTask {
     description: string;
     scheduled_date: string;
     evaluation_pending: boolean;
-    // O Supabase retorna o profissional aninhado se a relação estiver correta
+    // FIX: Supabase returns relationships as an array. The type now reflects this.
     professionals: {
         name: string;
     } | null;
@@ -60,7 +61,7 @@ const TasksView: React.FC<TasksViewProps> = ({ setCurrentPage }) => {
             console.error('Error fetching tasks:', error);
             setError('Não foi possível carregar suas tarefas. Tente novamente mais tarde.');
         } else {
-            setTasks(data || []);
+            setTasks(data as SupabaseTask[] || []);
         }
         setLoading(false);
     };

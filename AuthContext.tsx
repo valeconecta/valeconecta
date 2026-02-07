@@ -1,6 +1,7 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from './supabaseClient';
-import { Session, User, AuthError } from '@supabase/supabase-js';
+import { Session, User, AuthError, PostgrestError } from '@supabase/supabase-js';
 import { Role } from './auth/enums/role.enum';
 
 // Profile data stored in our public.users table
@@ -96,7 +97,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             if (profError) {
               console.error("Error creating professional profile:", profError);
-              return { error: profError as AuthError };
+              // FIX: Cast PostgrestError to unknown first before casting to AuthError to resolve type incompatibility.
+              return { error: profError as unknown as AuthError };
             }
 
             // 2. Create wallet for the professional profile
@@ -111,7 +113,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             if (walletError) {
               console.error("Error creating wallet:", walletError);
-              return { error: walletError as AuthError };
+              // FIX: Cast PostgrestError to unknown first before casting to AuthError to resolve type incompatibility.
+              return { error: walletError as unknown as AuthError };
             }
         }
         

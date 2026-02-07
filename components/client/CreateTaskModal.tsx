@@ -1,6 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, Type } from '@google/genai';
-import { XIcon, ImageIcon, SpinnerIcon, Trash2Icon } from '../Icons';
+import { XIcon, ImageIcon, SpinnerIcon } from '../Icons';
 import { categories } from '../../data/professionals';
 import { createTask, getAddressesByUserId } from '../../supabaseService';
 import { useAuth } from '../../AuthContext';
@@ -79,33 +79,27 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onTa
         }
         setIsAnalyzing(true);
         try {
-            const ai = new GoogleGenAI({apiKey: process.env.API_KEY as string});
-            const prompt = `Analise a seguinte descrição de um serviço doméstico e retorne um objeto JSON com uma única chave "categoria". A categoria deve ser a mais relevante da seguinte lista: [${categories.join(', ')}].\n\nDescrição do serviço: "${taskData.description}"\n\nResponda APENAS com o objeto JSON.`;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
-                contents: [{ parts: [{ text: prompt }] }],
-                config: {
-                    responseMimeType: 'application/json',
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            categoria: { type: Type.STRING }
-                        },
-                        required: ['categoria']
-                    }
-                }
+            // A chamada agora é para o nosso backend, que é seguro e protege a API Key.
+            const response = await fetch('/api/v1/analyze-description', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: taskData.description, categories: categories })
             });
+            
+            if (!response.ok) {
+                throw new Error('Falha na comunicação com o servidor de análise.');
+            }
 
-            if (response.text) {
-                const cleanedText = response.text.trim().replace(/^```json\s*|```\s*$/g, '');
-                const result = JSON.parse(cleanedText) as { categoria: string };
-                if (result.categoria && categories.includes(result.categoria)) {
-                    handleDataChange('category', result.categoria);
-                }
+            const result = await response.json();
+
+            if (result.categoria && categories.includes(result.categoria)) {
+                handleDataChange('category', result.categoria);
+            } else {
+                console.warn("Categoria recebida do backend não é válida ou não foi retornada.", result);
+                alert("Não foi possível sugerir uma categoria. Por favor, selecione uma manualmente.");
             }
         } catch (error) {
-            console.error("Erro ao analisar com Gemini:", error);
+            console.error("Erro ao analisar descrição via backend:", error);
             alert("Não foi possível analisar a descrição. Por favor, selecione uma categoria manualmente.");
         } finally {
             setIsAnalyzing(false);

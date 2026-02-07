@@ -55,6 +55,13 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ proposalId, amount, onSucce
       {/* O Payment Brick renderiza o formulário completo e o botão de pagamento */}
       <Payment
         initialization={{ amount }}
+        // FIX: Added the required 'customization' prop for the Payment Brick.
+        customization={{
+            paymentMethods: {
+                creditCard: 'all',
+                debitCard: 'all',
+            }
+        }}
         onSubmit={handleSubmit}
         onReady={() => console.log('Payment Brick está pronto!')}
         onError={(err) => {

@@ -12,7 +12,8 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
     <div className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-bold text-gray-800">{review.clientName}</p>
+          {/* FIX: Changed clientName to client_name to match the type definition. */}
+          <p className="font-bold text-gray-800">{review.client_name}</p>
           <p className="text-xs text-gray-500">{review.date}</p>
         </div>
         <div className="flex">
@@ -26,10 +27,12 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
       </div>
       <p className="mt-2 text-sm font-semibold text-gray-600">{review.service}</p>
       <p className="mt-2 text-gray-700 italic">"{review.comment}"</p>
-      {review.professionalReply && (
+      {/* FIX: Changed professionalReply to professional_reply to match the type definition. */}
+      {review.professional_reply && (
         <div className="mt-4 ml-4 pl-4 border-l-2 border-[#2A8C82]/50 bg-gray-50 p-3 rounded-r-lg">
             <p className="text-sm font-bold text-gray-800">Resposta do Profissional:</p>
-            <p className="text-sm text-gray-600 mt-1 italic">"{review.professionalReply}"</p>
+            {/* FIX: Changed professionalReply to professional_reply to match the type definition. */}
+            <p className="text-sm text-gray-600 mt-1 italic">"{review.professional_reply}"</p>
         </div>
       )}
     </div>

@@ -1,29 +1,8 @@
 
 import React, { useState } from 'react';
-import { supportTickets } from '../../../data/adminMockData';
+// FIX: Imported Ticket type and data from the centralized mock data file.
+import { supportTickets, Ticket } from '../../../data/adminMockData';
 import { ArrowLeftIcon, ClipboardListIcon, UsersIcon } from '../../Icons';
-
-type Message = {
-    sender: 'client' | 'professional' | 'admin';
-    text: string;
-    timestamp: string;
-};
-
-type Ticket = {
-    id: string;
-    subject: string;
-    client: string;
-    professional: string | null;
-    status: 'Em Análise' | 'Aguardando Resposta' | 'Resolvido';
-    priority: 'Alta' | 'Média' | 'Baixa';
-    openDate: string;
-    relatedTask: {
-        id: string;
-        title: string;
-        value: number;
-    } | null;
-    messages: Message[];
-};
 
 const statusStyles: { [key: string]: string } = {
     'Em Análise': 'bg-blue-100 text-blue-800',

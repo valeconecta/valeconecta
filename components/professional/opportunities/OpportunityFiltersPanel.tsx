@@ -115,7 +115,8 @@ const OpportunityFiltersPanel: React.FC<OpportunityFiltersPanelProps> = ({ filte
                         <input
                             type="checkbox"
                             name="materialsProvided"
-                            checked={filters.hasMaterials}
+                            // FIX: Changed filters.hasMaterials to filters.materialsProvided to match the 'Filters' type.
+                            checked={filters.materialsProvided}
                             onChange={handleCheckboxChange}
                             className="h-4 w-4 rounded border-gray-300 text-[#2A8C82] focus:ring-[#2A8C82]"
                         />

@@ -1,4 +1,27 @@
 
+// FIX: Moved type definitions here from SupportView for better organization and to fix type errors.
+export type Message = {
+    sender: 'client' | 'professional' | 'admin';
+    text: string;
+    timestamp: string;
+};
+
+export type Ticket = {
+    id: string;
+    subject: string;
+    client: string;
+    professional: string | null;
+    status: 'Em Análise' | 'Aguardando Resposta' | 'Resolvido';
+    priority: 'Alta' | 'Média' | 'Baixa';
+    openDate: string;
+    relatedTask: {
+        id: string;
+        title: string;
+        value: number;
+    } | null;
+    messages: Message[];
+};
+
 export const clients = [
     { id: 1, name: 'Mariana S.', email: 'mariana@email.com', joinDate: '2023-10-22', status: 'Ativo' },
     { id: 2, name: 'João Pedro', email: 'jp@email.com', joinDate: '2023-10-20', status: 'Ativo' },
@@ -35,7 +58,7 @@ export const withdrawalRequests = [
     { id: 2, professional: 'Mariana Costa', amount: 820.00, date: '2023-10-22' },
 ];
 
-export const supportTickets = [
+export const supportTickets: Ticket[] = [
     {
         id: 'DISP-001',
         subject: 'Serviço de pintura incompleto',

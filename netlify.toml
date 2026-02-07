@@ -1,0 +1,39 @@
+
+# netlify.toml
+
+# Configurações de build
+[build]
+  # Comando para construir o site:
+  # 1. Instala esbuild (nosso bundler)
+  # 2. Garante que o diretório de publicação 'dist' exista
+  # 3. Compila, otimiza e agrupa todo o código, injetando as variáveis de ambiente do Netlify no processo
+  # 4. Copia o index.html para 'dist' e o atualiza para usar o arquivo JavaScript compilado
+  command = """
+    npm install esbuild && \
+    mkdir -p dist && \
+    npx esbuild index.tsx --bundle --outfile=dist/bundle.js --minify --jsx=automatic \
+    --define:process.env.REACT_APP_SUPABASE_URL="'$REACT_APP_SUPABASE_URL'" \
+    --define:process.env.REACT_APP_SUPABASE_ANON_KEY="'$REACT_APP_SUPABASE_ANON_KEY'" \
+    --define:process.env.REACT_APP_MERCADO_PAGO_PUBLIC_KEY="'$REACT_APP_MERCADO_PAGO_PUBLIC_KEY'" && \
+    cp index.html dist/index.html && \
+    sed -i 's|<script type="module" src="/index.tsx"></script>|<script src="/bundle.js"></script>|' dist/index.html
+  """
+  
+  # Diretório que o Netlify irá publicar
+  publish = "dist"
+
+# Redirecionamento para Single-Page Application (SPA)
+# Isso garante que a navegação do React (ou a lógica de troca de página) funcione corretamente.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Redirecionamento de proxy para a API de backend
+# IMPORTANTE: Substitua 'https://sua-api-de-backend.com' pelo URL real da sua API.
+# Isso fará com que chamadas para '/api/*' no seu frontend (ex: /api/v1/chat) sejam direcionadas para o seu backend.
+[[redirects]]
+  from = "/api/*"
+  to = "https://sua-api-de-backend.com/:splat"
+  status = 200
+  force = true

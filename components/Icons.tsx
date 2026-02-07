@@ -1,12 +1,15 @@
 
 import React from 'react';
 
-interface IconProps {
+// FIX: Extend SVGProps to allow standard SVG attributes like fill, stroke, etc.
+// This resolves type errors when passing props like 'fill' to icon components.
+interface IconProps extends React.SVGProps<SVGSVGElement> {
   className?: string;
 }
 
-export const Logo: React.FC<IconProps> = ({ className = 'h-20 w-auto' }) => (
-  <img src="https://i.postimg.cc/J0YjP5v9/logo-vale-conecta-removebg-preview.png" alt="Vale Conecta Logo" className={className} />
+// FIX: The Logo component now accepts all standard HTML image attributes (e.g., onClick).
+export const Logo: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = 'h-20 w-auto', ...props }) => (
+  <img src="https://i.postimg.cc/J0YjP5v9/logo-vale-conecta-removebg-preview.png" alt="Vale Conecta Logo" className={className} {...props} />
 );
 
 export const WrenchIcon: React.FC<IconProps> = ({ className }) => (
