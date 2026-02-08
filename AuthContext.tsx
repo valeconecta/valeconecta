@@ -37,17 +37,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setUser(currentUser ?? null);
 
                 if (currentUser) {
-                    const { data: profileData, error: profileError } = await supabase
-                        .from('users')
-                        .select('id, full_name, role')
-                        .eq('id', currentUser.id)
-                        .single();
-
-                    if (profileError) {
-                        console.error("Error fetching user profile:", profileError);
-                        setProfile(null);
+                    // Adiciona um mecanismo de polling para aguardar o perfil do usuário ser criado
+                    // pela trigger do Supabase após o cadastro. Isso evita uma condição de corrida
+                    // onde o usuário está autenticado mas seu perfil com a 'role' ainda não existe.
+                    let profileData = null;
+                    let attempts = 0;
+                    while (!profileData && attempts < 5) {
+                        const { data, error } = await supabase
+                            .from('users')
+                            .select('id, full_name, role')
+                            .eq('id', currentUser.id)
+                            .single();
+                        
+                        // O código 'PGRST116' significa "0 linhas encontradas", o que é esperado
+                        // brevemente após o cadastro. Não é um erro, apenas uma condição temporária.
+                        if (error && error.code !== 'PGRST116') {
+                            console.error("Error fetching user profile:", error);
+                            break; 
+                        }
+                        
+                        profileData = data;
+                        
+                        if (!profileData) {
+                            attempts++;
+                            if (attempts < 5) {
+                                // Aguarda 300ms antes de tentar novamente
+                                await new Promise(resolve => setTimeout(resolve, 300));
+                            }
+                        }
+                    }
+                    
+                    if (profileData) {
+                         setProfile(profileData as UserProfile);
                     } else {
-                        setProfile(profileData as UserProfile);
+                        // Se o perfil ainda não for encontrado após as tentativas, registra o problema.
+                        console.error("User profile not found for user:", currentUser.id);
+                        setProfile(null);
                     }
                 } else {
                     setProfile(null);
@@ -68,16 +93,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     const signUp = async (email: string, password: string, fullName: string, role: Role) => {
-        // Automatically assign ADMIN role to a specific email for seeding purposes.
-        const finalRole = email.toLowerCase() === 'surfads02@gmail.com' ? Role.ADMIN : role;
-
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: {
                     full_name: fullName,
-                    role: finalRole
+                    role: role
                 }
             }
         });
@@ -87,7 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // Supabase has a trigger that copies user to public.users table.
         // For professional role, we create additional profiles.
-        if (finalRole === Role.PROFESSIONAL) {
+        if (role === Role.PROFESSIONAL) {
             // 1. Create professional profile
             const { data: profProfile, error: profError } = await supabase
                 .from('professionals')

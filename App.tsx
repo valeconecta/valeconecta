@@ -34,16 +34,22 @@ const AppContent: React.FC = () => {
     if (!loading && !session && (currentPage.includes('dashboard') || currentPage.includes('compare') || currentPage.includes('detail') || currentPage === 'admin')) {
         setCurrentPage('login');
     }
+    // FIX: A lógica de redirecionamento pós-login foi ajustada.
+    // O redirecionamento para 'home' foi removido para aguardar o perfil do usuário (profile) ser carregado.
+    // Isso evita que o usuário seja enviado para a página inicial incorretamente se o perfil demorar um instante para carregar após o login.
+    // A verificação `if (profile)` garante que o redirecionamento para o painel correto só ocorra quando os dados do usuário estiverem prontos.
     if (!loading && session && (currentPage === 'login' || currentPage === 'register')) {
-        if (profile?.role === Role.CLIENT) {
-            setCurrentPage('client-dashboard');
-        } else if (profile?.role === Role.PROFESSIONAL) {
-            setCurrentPage('professional-dashboard');
-        } else if (profile?.role === Role.ADMIN) {
-            setCurrentPage('admin');
-        } else {
-            setCurrentPage('home');
+        if (profile) {
+            if (profile.role === Role.CLIENT) {
+                setCurrentPage('client-dashboard');
+            } else if (profile.role === Role.PROFESSIONAL) {
+                setCurrentPage('professional-dashboard');
+            } else if (profile.role === Role.ADMIN) {
+                setCurrentPage('admin');
+            }
         }
+        // Não redirecionar para 'home' se o perfil ainda não estiver carregado.
+        // O efeito será executado novamente quando o 'profile' for atualizado.
     }
   }, [session, loading, profile, currentPage]);
 
