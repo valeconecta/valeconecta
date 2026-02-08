@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Page } from '../../types';
 import { AdminView, UserSubView, FinancialSubView } from '../../pages/AdminPage';
@@ -36,7 +37,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ currentView, setCurrentView
 
     const handleLogout = async () => {
         await signOut();
-        setCurrentPage('login');
+        // A navegação é tratada pelo App.tsx ao detectar a mudança de estado
     }
 
   return (

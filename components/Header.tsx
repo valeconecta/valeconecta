@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Page } from '../types';
 import { Logo, MenuIcon, XIcon } from './Icons';
@@ -22,7 +23,8 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage }) => {
   
   const handleLogout = async () => {
       await signOut();
-      setCurrentPage('home');
+      // A navegação agora é tratada centralmente pelo App.tsx
+      // com base na mudança do estado de autenticação.
   }
   
   const handleDashboardClick = () => {
